@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import './Visitantes.css'
 
-const initialForm = { nombre: '', correo: '', colegio: '' }
+const initialForm = { nombre: '', correo: '', telefono: '', colegio: '' }
 
 export default function Visitantes() {
   const [form, setForm] = useState(initialForm)
@@ -21,6 +21,7 @@ export default function Visitantes() {
     const { error } = await supabase.from('visitantes').insert({
       nombre: form.nombre.trim(),
       correo: form.correo.trim(),
+      telefono: form.telefono.trim(),
       colegio: form.colegio.trim(),
     })
 
@@ -93,6 +94,18 @@ export default function Visitantes() {
               required
               value={form.correo}
               onChange={(e) => updateField('correo', e.target.value)}
+            />
+          </div>
+
+          <div className="grupo">
+            <label htmlFor="telefono">Número de teléfono</label>
+            <input
+              type="tel"
+              id="telefono"
+              placeholder="Ej: 9999-9999"
+              required
+              value={form.telefono}
+              onChange={(e) => updateField('telefono', e.target.value)}
             />
           </div>
 
