@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import Topbar from '../components/Topbar'
 import Tabs from '../components/Tabs'
 import MsgBox from '../components/MsgBox'
+import ExcelJS from 'exceljs'
 import Badge from '../components/Badge'
 import { supabase } from '../lib/supabaseClient'
-import { calcularNotaFinal } from '../lib/criterios'
+import { calcularNotaFinal, CATEGORIAS } from '../lib/criterios'
 import { useAdminAuth } from '../hooks/useAdminAuth'
 import { useRealtimeRefresh } from '../hooks/useRealtimeRefresh'
 
@@ -133,7 +134,7 @@ function PanelAdmin() {
   )
 }
 
-function TabProyectos({ proyectos, onChange }) {
+function TablaProyectosCategoria({ categoria, proyectos, onChange }) {
   async function aprobar(id) {
     await supabase.from('proyectos').update({ estado: 'aprobado' }).eq('id', id)
     onChange()
@@ -150,23 +151,28 @@ function TabProyectos({ proyectos, onChange }) {
 
   return (
     <div className="card">
-      <h2>Proyectos inscritos</h2>
+      <h2>{categoria}</h2>
       <div className="table-scroll">
         <table>
           <thead>
             <tr>
               <th>Proyecto</th>
-              <th>Categoría</th>
               <th>Institución</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
+            {proyectos.length === 0 && (
+              <tr>
+                <td colSpan={4} style={{ color: 'var(--text-dim)' }}>
+                  Todavía no hay proyectos inscritos en esta categoría.
+                </td>
+              </tr>
+            )}
             {proyectos.map((p) => (
               <tr key={p.id}>
                 <td>{p.nombre_proyecto}</td>
-                <td>{p.categoria}</td>
                 <td>{p.institucion || ''}</td>
                 <td>
                   <Badge estado={p.estado} />
@@ -204,6 +210,21 @@ function TabProyectos({ proyectos, onChange }) {
         </table>
       </div>
     </div>
+  )
+}
+
+function TabProyectos({ proyectos, onChange }) {
+  return (
+    <>
+      {CATEGORIAS.map((categoria) => (
+        <TablaProyectosCategoria
+          key={categoria}
+          categoria={categoria}
+          proyectos={proyectos.filter((p) => p.categoria === categoria)}
+          onChange={onChange}
+        />
+      ))}
+    </>
   )
 }
 
@@ -329,82 +350,193 @@ function TabJueces({ jueces, onChange }) {
   )
 }
 
-function calcularFilasResultados(proyectos, calificaciones) {
+function calcularFilasResultados(proyectos, calificaciones, categoria) {
   return proyectos
-    .filter((p) => p.estado === 'aprobado')
+    .filter((p) => p.estado === 'aprobado' && p.categoria === categoria)
     .map((p) => {
       const califs = calificaciones.filter((c) => c.proyecto_id === p.id)
       const notas = califs.map((c) => calcularNotaFinal(c))
       const promedio = notas.length ? notas.reduce((a, b) => a + b, 0) / notas.length : null
-      return { nombre: p.nombre_proyecto, categoria: p.categoria, numJueces: califs.length, promedio }
+      return { nombre: p.nombre_proyecto, numJueces: califs.length, promedio }
     })
     .sort((a, b) => (b.promedio ?? -1) - (a.promedio ?? -1))
 }
 
-function TabResultados({ proyectos, calificaciones }) {
-  const filas = calcularFilasResultados(proyectos, calificaciones)
+function llenarHojaResultados(sheet, filas) {
+  sheet.columns = [
+    { header: '#', key: 'pos', width: 6 },
+    { header: 'Proyecto', key: 'nombre', width: 34 },
+    { header: '# Jueces', key: 'numJueces', width: 12 },
+    { header: 'Nota final', key: 'promedio', width: 14 },
+  ]
 
-   function exportarCSV() {
-    let csv = 'Nombre,Correo,Teléfono,Colegio,Fecha de registro\n'
-    visitantes.forEach((v) => {
-      const fecha = new Date(v.created_at).toLocaleString('es-HN')
-      csv += `"${v.nombre}","${v.correo}","${v.telefono || ''}","${v.colegio}","${fecha}"\n`
+  const header = sheet.getRow(1)
+  header.height = 24
+  header.eachCell((cell) => {
+    cell.font = { bold: true, size: 12, color: { argb: 'FF04121C' } }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5C542' } }
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+    cell.border = { bottom: { style: 'medium', color: { argb: 'FF04121C' } } }
+  })
+
+  const colorMedalla = ['FFFFF0B8', 'FFE7E7E7', 'FFF0D3B8']
+
+  filas.forEach((f, i) => {
+    const row = sheet.addRow({
+      pos: i + 1,
+      nombre: f.nombre,
+      numJueces: f.numJueces,
+      promedio: f.promedio !== null ? Number(f.promedio.toFixed(2)) : null,
     })
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    row.height = 20
+    row.eachCell((cell, colNumber) => {
+      cell.alignment = { vertical: 'middle', horizontal: colNumber === 2 ? 'left' : 'center' }
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FFDDDDDD' } } }
+      if (i < 3) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorMedalla[i] } }
+        cell.font = { bold: true }
+      }
+    })
+  })
+
+  sheet.getColumn('promedio').numFmt = '0.00'
+  sheet.autoFilter = { from: 'A1', to: 'D1' }
+}
+
+function TabResultados({ proyectos, calificaciones }) {
+  async function exportarExcel() {
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'Feria de Informática Gaming Edition'
+    workbook.created = new Date()
+
+    CATEGORIAS.forEach((categoria) => {
+      const filas = calcularFilasResultados(proyectos, calificaciones, categoria)
+      const sheet = workbook.addWorksheet(categoria.slice(0, 31), {
+        views: [{ state: 'frozen', ySplit: 1 }],
+      })
+      llenarHojaResultados(sheet, filas)
+    })
+
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'resultados_feria_informatica.csv'
+    a.download = 'resultados_feria_informatica.xlsx'
     a.click()
     URL.revokeObjectURL(url)
   }
 
   return (
-    <div className="card">
-      <h2>Resultados</h2>
-      <button className="btn gold" onClick={exportarCSV}>
-        Exportar CSV
-      </button>
-      <div className="table-scroll">
-        <table style={{ marginTop: 16 }}>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Proyecto</th>
-              <th>Categoría</th>
-              <th># Jueces</th>
-              <th>Nota final</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filas.map((f, i) => (
-              <tr key={f.nombre + i}>
-                <td>{i + 1}</td>
-                <td>{f.nombre}</td>
-                <td>{f.categoria}</td>
-                <td>{f.numJueces}</td>
-                <td>{f.promedio !== null ? f.promedio.toFixed(2) : '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <>
+      <div className="card">
+        <h2>Resultados</h2>
+        <p style={{ color: 'var(--text-dim)', fontSize: '.85rem' }}>
+          Un ranking por cada categoría. El Excel exporta ambas en hojas separadas.
+        </p>
+        <button className="btn gold" onClick={exportarExcel}>
+          Exportar Excel
+        </button>
       </div>
-    </div>
+
+      {CATEGORIAS.map((categoria) => {
+        const filas = calcularFilasResultados(proyectos, calificaciones, categoria)
+        return (
+          <div className="card" key={categoria}>
+            <h2>{categoria}</h2>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Proyecto</th>
+                    <th># Jueces</th>
+                    <th>Nota final</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filas.length === 0 && (
+                    <tr>
+                      <td colSpan={4} style={{ color: 'var(--text-dim)' }}>
+                        Todavía no hay proyectos aprobados con calificación en esta categoría.
+                      </td>
+                    </tr>
+                  )}
+                  {filas.map((f, i) => (
+                    <tr key={f.nombre + i}>
+                      <td>{i + 1}</td>
+                      <td>{f.nombre}</td>
+                      <td>{f.numJueces}</td>
+                      <td>{f.promedio !== null ? f.promedio.toFixed(2) : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      })}
+    </>
   )
 }
 
 function TabVisitantes({ visitantes }) {
-  function exportarCSV() {
-    let csv = 'Nombre,Correo,Colegio,Fecha de registro\n'
-    visitantes.forEach((v) => {
-      const fecha = new Date(v.created_at).toLocaleString('es-HN')
-      csv += `"${v.nombre}","${v.correo}","${v.colegio}","${fecha}"\n`
+  async function exportarExcel() {
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'Feria de Informática Gaming Edition'
+    workbook.created = new Date()
+
+    const sheet = workbook.addWorksheet('Visitantes', {
+      views: [{ state: 'frozen', ySplit: 1 }],
     })
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+
+    sheet.columns = [
+      { header: 'Nombre', key: 'nombre', width: 28 },
+      { header: 'Correo', key: 'correo', width: 30 },
+      { header: 'Teléfono', key: 'telefono', width: 16 },
+      { header: 'Colegio', key: 'colegio', width: 28 },
+      { header: 'Fecha de registro', key: 'fecha', width: 20 },
+    ]
+
+    const header = sheet.getRow(1)
+    header.height = 24
+    header.eachCell((cell) => {
+      cell.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } }
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A8FB0' } }
+      cell.alignment = { vertical: 'middle', horizontal: 'center' }
+      cell.border = { bottom: { style: 'medium', color: { argb: 'FF04121C' } } }
+    })
+
+    visitantes.forEach((v, i) => {
+      const row = sheet.addRow({
+        nombre: v.nombre,
+        correo: v.correo,
+        telefono: v.telefono || '',
+        colegio: v.colegio,
+        fecha: new Date(v.created_at).toLocaleString('es-HN'),
+      })
+      row.height = 20
+      row.eachCell((cell) => {
+        cell.alignment = { vertical: 'middle' }
+        cell.border = { bottom: { style: 'thin', color: { argb: 'FFDDDDDD' } } }
+        if (i % 2 === 1) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F7F7' } }
+        }
+      })
+    })
+
+    sheet.autoFilter = { from: 'A1', to: 'E1' }
+
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'visitantes_feria_informatica.csv'
+    a.download = 'visitantes_feria_informatica.xlsx'
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -416,12 +548,12 @@ function TabVisitantes({ visitantes }) {
         Estudiantes que se registraron en <code>/registro-visitantes</code>. Úsalo para enviar
         promociones o como base para la ruleta de premios.
       </p>
-      <button className="btn gold" onClick={exportarCSV}>
-        Exportar CSV
+      <button className="btn gold" onClick={exportarExcel}>
+        Exportar Excel
       </button>
       <div className="table-scroll">
         <table style={{ marginTop: 16 }}>
-                   <thead>
+          <thead>
             <tr>
               <th>Nombre</th>
               <th>Correo</th>
