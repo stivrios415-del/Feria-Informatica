@@ -114,7 +114,7 @@ export default function Inscripcion() {
 
             <div className="i-section">
               <h2>Equipo</h2>
-              <label>Institución / Colegio / Universidad</label>
+              <label>Institución / Grado</label>
               <input
                 type="text"
                 required
