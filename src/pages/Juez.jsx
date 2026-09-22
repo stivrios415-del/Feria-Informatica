@@ -187,10 +187,22 @@ function ProyectoCalificable({ proyecto, existente, calificacionAbierta, onGuard
         {proyecto.nombre_proyecto}{' '}
         {existente && <Badge estado="aprobado">Calificado</Badge>}
       </h2>
-      <p style={{ color: 'var(--text-dim)', fontSize: '.85rem' }}>
+        <p style={{ color: 'var(--text-dim)', fontSize: '.85rem' }}>
         {proyecto.institucion || ''} — {proyecto.integrantes || ''}
       </p>
-      <p style={{ fontSize: '.88rem' }}>{proyecto.descripcion || ''}</p>
+      <p
+        style={{
+          fontSize: '.75rem',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '.06em',
+          color: 'var(--gold)',
+          marginTop: 12,
+        }}
+      >
+        Descripción del proyecto
+      </p>
+      <p style={{ fontSize: '.9rem', lineHeight: 1.5 }}>{proyecto.descripcion}</p>
 
       {CRITERIOS.map((c) => (
         <CriterioSlider
