@@ -344,12 +344,11 @@ function calcularFilasResultados(proyectos, calificaciones) {
 function TabResultados({ proyectos, calificaciones }) {
   const filas = calcularFilasResultados(proyectos, calificaciones)
 
-  function exportarCSV() {
-    let csv = 'Posición,Proyecto,Categoría,# Jueces,Nota final\n'
-    filas.forEach((f, i) => {
-      csv += `${i + 1},"${f.nombre}","${f.categoria}",${f.numJueces},${
-        f.promedio !== null ? f.promedio.toFixed(2) : ''
-      }\n`
+   function exportarCSV() {
+    let csv = 'Nombre,Correo,Teléfono,Colegio,Fecha de registro\n'
+    visitantes.forEach((v) => {
+      const fecha = new Date(v.created_at).toLocaleString('es-HN')
+      csv += `"${v.nombre}","${v.correo}","${v.telefono || ''}","${v.colegio}","${fecha}"\n`
     })
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -422,10 +421,11 @@ function TabVisitantes({ visitantes }) {
       </button>
       <div className="table-scroll">
         <table style={{ marginTop: 16 }}>
-          <thead>
+                   <thead>
             <tr>
               <th>Nombre</th>
               <th>Correo</th>
+              <th>Teléfono</th>
               <th>Colegio</th>
               <th>Fecha</th>
             </tr>
@@ -435,6 +435,7 @@ function TabVisitantes({ visitantes }) {
               <tr key={v.id}>
                 <td>{v.nombre}</td>
                 <td>{v.correo}</td>
+                <td>{v.telefono || ''}</td>
                 <td>{v.colegio}</td>
                 <td>{new Date(v.created_at).toLocaleString('es-HN')}</td>
               </tr>
