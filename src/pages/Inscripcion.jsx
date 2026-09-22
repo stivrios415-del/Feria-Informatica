@@ -25,9 +25,15 @@ export default function Inscripcion() {
     setForm((f) => ({ ...f, [field]: value }))
   }
 
-  async function handleSubmit(e) {
+   async function handleSubmit(e) {
     e.preventDefault()
     setMsg({ text: '', type: '' })
+
+    if (!form.descripcion.trim()) {
+      setMsg({ text: 'La descripción del proyecto es obligatoria.', type: 'err' })
+      return
+    }
+
     setEnviando(true)
 
     const data = {
