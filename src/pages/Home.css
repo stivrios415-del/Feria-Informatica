@@ -1,0 +1,312 @@
+.home {
+  --bg: #030712;
+  --ink: #f8fafc;
+  --ink-dim: #94a3b8;
+  --cyan: #00f0ff;
+  --cyan-glow: rgba(0, 240, 255, 0.35);
+  --gold: #f5c542;
+  --magenta: #ff2f92;
+  --green: #3ddc84;
+  --line: rgba(255, 255, 255, 0.09);
+
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.home::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 15% 10%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 90% 90%, rgba(245, 197, 66, 0.05) 0%, transparent 45%);
+  z-index: -1;
+}
+
+/* Topbar */
+.home .h-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: rgba(3, 7, 18, 0.75);
+  backdrop-filter: blur(14px);
+  z-index: 100;
+}
+
+.home .h-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.home .h-brand img {
+  height: 38px;
+  width: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--cyan);
+  object-fit: cover;
+}
+
+.home .h-brand h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 0.06em;
+}
+
+.home .h-brand h1 span {
+  color: var(--magenta);
+}
+
+.home .h-nav {
+  display: flex;
+  gap: 20px;
+}
+
+.home .h-nav a {
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: color 0.2s ease;
+}
+
+.home .h-nav a:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .home .h-nav {
+    display: none;
+  }
+}
+
+/* Hero: logo + copy, side by side */
+.home .h-hero {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(48px, 9vw, 108px) 28px clamp(40px, 6vw, 72px);
+  display: grid;
+  grid-template-columns: minmax(200px, 300px) 1fr;
+  gap: clamp(28px, 6vw, 72px);
+  align-items: center;
+}
+
+@media (max-width: 860px) {
+  .home .h-hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+}
+
+.home .logo-container {
+  display: inline-block;
+  cursor: pointer;
+  perspective: 1000px;
+  opacity: 0;
+  animation: h-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.home .logo-container img.logo {
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--cyan);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 40px var(--cyan-glow);
+  transition: transform 0.15s ease-out;
+  will-change: transform;
+}
+
+.home .h-hero-copy {
+  text-align: left;
+}
+
+@media (max-width: 860px) {
+  .home .h-hero-copy {
+    text-align: center;
+  }
+}
+
+.home .h-eyebrow {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: var(--cyan);
+  opacity: 0;
+  animation: h-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.02s both;
+}
+
+.home .h-hero-copy h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.9rem, 5.5vw, 3.4rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  margin-top: 14px;
+  opacity: 0;
+  animation: h-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
+}
+
+.home .h-hero-copy h1 b {
+  color: var(--magenta);
+}
+
+.home .h-rule {
+  display: block;
+  width: 60px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--cyan);
+  margin: 22px 0;
+  opacity: 0;
+  animation: h-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+@media (max-width: 860px) {
+  .home .h-rule {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.home .h-hero-copy p.lede {
+  max-width: 46ch;
+  color: var(--ink-dim);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  opacity: 0;
+  animation: h-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
+}
+
+@media (max-width: 860px) {
+  .home .h-hero-copy p.lede {
+    margin: 0 auto;
+  }
+}
+
+/* Accesos: subrayado, no tarjetas */
+.home .h-actions {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 30px;
+}
+
+@media (max-width: 860px) {
+  .home .h-actions {
+    justify-content: center;
+  }
+}
+
+.home .h-actions a {
+  --accent: var(--cyan);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  padding-bottom: 8px;
+  opacity: 0;
+  animation: h-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: color 0.2s ease;
+}
+
+.home .h-actions a:nth-child(1) { animation-delay: 0.46s; }
+.home .h-actions a:nth-child(2) { animation-delay: 0.52s; }
+.home .h-actions a:nth-child(3) { animation-delay: 0.58s; }
+.home .h-actions a:nth-child(4) { animation-delay: 0.64s; }
+
+.home .h-actions a.gold { --accent: var(--gold); }
+.home .h-actions a.magenta { --accent: var(--magenta); }
+.home .h-actions a.green { --accent: var(--green); }
+
+.home .h-actions a i {
+  color: var(--accent);
+  font-size: 0.95rem;
+}
+
+.home .h-actions a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home .h-actions a:hover {
+  color: var(--accent);
+}
+
+.home .h-actions a:hover::after {
+  right: 0;
+}
+
+/* Footer: criterios como "readout" monoespaciado */
+.home .h-footer-note {
+  max-width: 1180px;
+  margin: clamp(40px, 7vw, 88px) auto 0;
+  padding: 20px 28px 44px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem;
+  color: var(--ink-dim);
+}
+
+.home .h-footer-note b {
+  color: var(--ink);
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+}
+
+.home .h-footer-note .crit {
+  color: var(--cyan);
+}
+
+@keyframes h-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home .logo-container,
+  .home .h-eyebrow,
+  .home .h-hero-copy h1,
+  .home .h-rule,
+  .home .h-hero-copy p.lede,
+  .home .h-actions a {
+    animation: none;
+    opacity: 1;
+  }
+}

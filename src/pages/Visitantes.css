@@ -1,0 +1,275 @@
+.visitantes-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  color: white;
+  background: radial-gradient(circle at 10% 20%, rgba(146, 91, 50, 0.3), transparent 30%),
+    radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.08), transparent 25%),
+    linear-gradient(135deg, #080808, #17120f, #050505);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.visitantes-page .fondo {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0.35;
+  animation: v-flotar 10s infinite ease-in-out;
+}
+
+.visitantes-page .fondo1 {
+  width: 350px;
+  height: 350px;
+  background: #6f4125;
+  top: -100px;
+  left: -100px;
+}
+
+.visitantes-page .fondo2 {
+  width: 300px;
+  height: 300px;
+  background: #b2784a;
+  bottom: -100px;
+  right: -80px;
+  animation-delay: 2s;
+}
+
+.visitantes-page .fondo3 {
+  width: 180px;
+  height: 180px;
+  background: #ffffff;
+  top: 45%;
+  right: 15%;
+  opacity: 0.07;
+  animation-delay: 4s;
+}
+
+@keyframes v-flotar {
+  0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+  50% { transform: translateY(-30px) translateX(20px) scale(1.1); }
+}
+
+.visitantes-page .particulas span {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #c49a75;
+  border-radius: 50%;
+  animation: v-particula 8s linear infinite;
+  opacity: 0.5;
+}
+
+.visitantes-page .particulas span:nth-child(1) { left: 10%; animation-delay: 0s; }
+.visitantes-page .particulas span:nth-child(2) { left: 25%; animation-delay: 2s; }
+.visitantes-page .particulas span:nth-child(3) { left: 45%; animation-delay: 4s; }
+.visitantes-page .particulas span:nth-child(4) { left: 65%; animation-delay: 1s; }
+.visitantes-page .particulas span:nth-child(5) { left: 85%; animation-delay: 3s; }
+
+@keyframes v-particula {
+  0% { bottom: -10px; transform: translateX(0); }
+  50% { transform: translateX(60px); }
+  100% { bottom: 110%; transform: translateX(-40px); }
+}
+
+.visitantes-page .contenedor {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  padding: 45px;
+  background: rgba(20, 18, 16, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  z-index: 10;
+  animation: v-entrada 1s ease;
+}
+
+@keyframes v-entrada {
+  from { opacity: 0; transform: translateY(40px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.visitantes-page .encabezado {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.visitantes-page .logo {
+  width: 85px;
+  height: 85px;
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ffffff, #d6c1b0, #8c5635);
+  color: #130d09;
+  box-shadow: 0 0 35px rgba(179, 124, 80, 0.35);
+  animation: v-brillo 3s infinite;
+}
+
+.visitantes-page .icono-graduacion {
+  width: 48px;
+  height: 48px;
+  display: block;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.18));
+}
+
+@keyframes v-brillo {
+  0%, 100% { box-shadow: 0 0 20px rgba(179, 124, 80, 0.25); }
+  50% { box-shadow: 0 0 45px rgba(179, 124, 80, 0.55); }
+}
+
+.visitantes-page h1 {
+  margin-top: 20px;
+  font-size: 32px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #ffffff, #c29a78, #ffffff);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: v-textoBrillo 4s linear infinite;
+}
+
+@keyframes v-textoBrillo {
+  to { background-position: 200% center; }
+}
+
+.visitantes-page .subtitulo {
+  margin-top: 10px;
+  color: #b8aaa0;
+  font-size: 14px;
+}
+
+.visitantes-page .grupo {
+  margin-bottom: 22px;
+  position: relative;
+}
+
+.visitantes-page label {
+  display: block;
+  margin-bottom: 9px;
+  color: #e5d8ce;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.visitantes-page input {
+  width: 100%;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 13px;
+  color: white;
+  font-size: 15px;
+  outline: none;
+  transition: border 0.3s, box-shadow 0.3s, background 0.3s, transform 0.3s;
+}
+
+.visitantes-page input::placeholder {
+  color: #887c73;
+}
+
+.visitantes-page input:focus {
+  border-color: #aa7047;
+  background: rgba(172, 112, 71, 0.08);
+  box-shadow: 0 0 0 4px rgba(170, 112, 71, 0.1), 0 0 25px rgba(170, 112, 71, 0.12);
+  transform: translateY(-2px);
+}
+
+.visitantes-page .boton {
+  width: 100%;
+  padding: 17px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(110deg, #6f4125, #a66d46, #d2a276, #6f4125);
+  background-size: 300% 100%;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.35s;
+  animation: v-botonMovimiento 5s linear infinite;
+  box-shadow: 0 10px 30px rgba(107, 64, 37, 0.35);
+}
+
+.visitantes-page .boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes v-botonMovimiento {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+.visitantes-page .boton:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 15px 40px rgba(174, 116, 76, 0.4);
+}
+
+.visitantes-page .boton:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.visitantes-page .mensaje {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 12px;
+  text-align: center;
+  animation: v-aparecer 0.5s ease;
+}
+
+.visitantes-page .mensaje.ok {
+  background: rgba(80, 150, 100, 0.12);
+  border: 1px solid rgba(120, 220, 140, 0.25);
+  color: #b6edc0;
+}
+
+.visitantes-page .mensaje.err {
+  background: rgba(220, 90, 90, 0.12);
+  border: 1px solid rgba(255, 140, 140, 0.3);
+  color: #ffc2c2;
+}
+
+@keyframes v-aparecer {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.visitantes-page .pie {
+  margin-top: 25px;
+  text-align: center;
+  color: #746961;
+  font-size: 12px;
+}
+
+.visitantes-page .linea {
+  width: 60px;
+  height: 2px;
+  margin: 15px auto;
+  background: linear-gradient(90deg, transparent, #a66d46, transparent);
+}
+
+@media (max-width: 600px) {
+  .visitantes-page .contenedor {
+    padding: 30px 22px;
+  }
+  .visitantes-page h1 {
+    font-size: 25px;
+  }
+  .visitantes-page .logo {
+    width: 70px;
+    height: 70px;
+  }
+  .visitantes-page .icono-graduacion {
+    width: 40px;
+    height: 40px;
+  }
+}

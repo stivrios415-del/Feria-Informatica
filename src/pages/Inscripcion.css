@@ -1,0 +1,203 @@
+.inscripcion-page .i-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 44px 20px 80px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 44px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .inscripcion-page .i-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Encabezado */
+.inscripcion-page .i-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.25em;
+  color: var(--blue);
+  text-transform: uppercase;
+}
+
+.inscripcion-page .i-head h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  margin: 10px 0 6px;
+  color: var(--text);
+}
+
+.inscripcion-page .i-head p {
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  max-width: 52ch;
+  margin-bottom: 30px;
+}
+
+/* Secciones del formulario, sin tarjeta envolvente repetida */
+.inscripcion-page .i-section {
+  border-top: 1px solid var(--border-light);
+  padding: 26px 0;
+}
+
+.inscripcion-page .i-section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.inscripcion-page .i-section h2 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 18px;
+}
+
+.inscripcion-page .i-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 560px) {
+  .inscripcion-page .i-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Selector de categoría: pills en vez de <select> */
+.inscripcion-page .i-cats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.inscripcion-page .i-cat {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border-light);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.inscripcion-page .i-cat:hover {
+  border-color: rgba(41, 216, 255, 0.4);
+  color: var(--text);
+}
+
+.inscripcion-page .i-cat.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #04121c;
+  box-shadow: 0 0 12px var(--blue-glow);
+}
+
+/* Contador de caracteres */
+.inscripcion-page .i-counter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 16px 0 6px;
+}
+
+.inscripcion-page .i-counter-row label {
+  margin: 0;
+}
+
+.inscripcion-page .i-counter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.inscripcion-page .i-counter.i-counter-near {
+  color: var(--gold);
+}
+
+.inscripcion-page textarea#descripcion {
+  margin-top: 0;
+}
+
+.inscripcion-page .i-submit {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Sidebar de criterios: el único bloque "elevado" de la página */
+.inscripcion-page .i-side {
+  position: sticky;
+  top: 24px;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+
+.inscripcion-page .i-side h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+
+.inscripcion-page .i-crit {
+  margin-bottom: 14px;
+}
+
+.inscripcion-page .i-crit:last-child {
+  margin-bottom: 0;
+}
+
+.inscripcion-page .i-crit-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+}
+
+.inscripcion-page .i-crit-label span:last-child {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--blue);
+}
+
+.inscripcion-page .i-crit-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.inscripcion-page .i-crit-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--gold));
+  border-radius: 3px;
+}
+
+.inscripcion-page .i-side .i-note {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+@media (max-width: 860px) {
+  .inscripcion-page .i-side {
+    position: static;
+  }
+}

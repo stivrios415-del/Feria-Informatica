@@ -1,0 +1,447 @@
+import { useCallback, useEffect, useState } from 'react'
+import Topbar from '../components/Topbar'
+import Tabs from '../components/Tabs'
+import MsgBox from '../components/MsgBox'
+import Badge from '../components/Badge'
+import { supabase } from '../lib/supabaseClient'
+import { calcularNotaFinal } from '../lib/criterios'
+import { useAdminAuth } from '../hooks/useAdminAuth'
+import { useRealtimeRefresh } from '../hooks/useRealtimeRefresh'
+
+const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // sin caracteres ambiguos (0/O, 1/I)
+
+export default function Admin() {
+  const { isAdmin, checking, error, login, logout } = useAdminAuth()
+
+  if (checking) return null
+
+  return (
+    <>
+      <Topbar>{isAdmin && <button onClick={logout}>Cerrar sesión</button>}</Topbar>
+      <div className="wrap">
+        {!isAdmin ? <LoginAdmin onLogin={login} error={error} /> : <PanelAdmin />}
+      </div>
+    </>
+  )
+}
+
+function LoginAdmin({ onLogin, error }) {
+  const [email, setEmail] = useState('')
+  const [pass, setPass] = useState('')
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    onLogin(email, pass)
+  }
+
+  return (
+    <div className="card">
+      <h2>Acceso de administrador</h2>
+      <form onSubmit={handleSubmit}>
+        <label>Correo</label>
+        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <label>Contraseña</label>
+        <input type="password" required value={pass} onChange={(e) => setPass(e.target.value)} />
+        <button className="btn" type="submit">
+          Ingresar
+        </button>
+        <MsgBox text={error} type="err" />
+      </form>
+    </div>
+  )
+}
+
+function PanelAdmin() {
+  const [tab, setTab] = useState('proyectos')
+  const [calificacionAbierta, setCalificacionAbierta] = useState(true)
+  const [proyectos, setProyectos] = useState([])
+  const [jueces, setJueces] = useState([])
+  const [calificaciones, setCalificaciones] = useState([])
+  const [visitantes, setVisitantes] = useState([])
+
+  const cargarEstado = useCallback(async () => {
+    const { data } = await supabase
+      .from('config')
+      .select('calificacion_abierta')
+      .eq('key', 'estado')
+      .maybeSingle()
+    setCalificacionAbierta(data ? data.calificacion_abierta !== false : true)
+  }, [])
+
+  const cargarTodo = useCallback(async () => {
+    const [{ data: p }, { data: j }, { data: c }, { data: v }] = await Promise.all([
+      supabase.from('proyectos').select('*').order('created_at', { ascending: false }),
+      supabase.from('jueces').select('*'),
+      supabase.from('calificaciones').select('*'),
+      supabase.from('visitantes').select('*').order('created_at', { ascending: false }),
+    ])
+    setProyectos(p || [])
+    setJueces(j || [])
+    setCalificaciones(c || [])
+    setVisitantes(v || [])
+  }, [])
+
+  useEffect(() => {
+    cargarEstado()
+    cargarTodo()
+  }, [cargarEstado, cargarTodo])
+
+  useRealtimeRefresh(
+    'admin-realtime',
+    ['proyectos', 'jueces', 'calificaciones', 'visitantes'],
+    cargarTodo
+  )
+
+  async function toggleEstado() {
+    const nuevo = !calificacionAbierta
+    setCalificacionAbierta(nuevo)
+    await supabase.from('config').update({ calificacion_abierta: nuevo }).eq('key', 'estado')
+  }
+
+  return (
+    <>
+      <div className="card">
+        <h2>Control de calificación</h2>
+        <p style={{ color: 'var(--text-dim)', fontSize: '.85rem' }}>
+          Mientras esté abierta, los jueces pueden calificar y editar sus notas.
+        </p>
+        <button className={'btn ' + (calificacionAbierta ? 'danger' : '')} onClick={toggleEstado}>
+          {calificacionAbierta
+            ? '🔓 Calificación ABIERTA (clic para cerrar)'
+            : '🔒 Calificación CERRADA (clic para abrir)'}
+        </button>
+      </div>
+
+      <Tabs
+        items={[
+          { value: 'proyectos', label: 'Proyectos' },
+          { value: 'jueces', label: 'Jueces' },
+          { value: 'resultados', label: 'Resultados' },
+          { value: 'visitantes', label: 'Visitantes' },
+        ]}
+        active={tab}
+        onChange={setTab}
+      />
+
+      {tab === 'proyectos' && <TabProyectos proyectos={proyectos} onChange={cargarTodo} />}
+      {tab === 'jueces' && <TabJueces jueces={jueces} onChange={cargarTodo} />}
+      {tab === 'resultados' && (
+        <TabResultados proyectos={proyectos} calificaciones={calificaciones} />
+      )}
+      {tab === 'visitantes' && <TabVisitantes visitantes={visitantes} />}
+    </>
+  )
+}
+
+function TabProyectos({ proyectos, onChange }) {
+  async function aprobar(id) {
+    await supabase.from('proyectos').update({ estado: 'aprobado' }).eq('id', id)
+    onChange()
+  }
+  async function rechazar(id) {
+    await supabase.from('proyectos').update({ estado: 'rechazado' }).eq('id', id)
+    onChange()
+  }
+  async function eliminar(id) {
+    if (!confirm('¿Eliminar este proyecto?')) return
+    await supabase.from('proyectos').delete().eq('id', id)
+    onChange()
+  }
+
+  return (
+    <div className="card">
+      <h2>Proyectos inscritos</h2>
+      <div className="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Categoría</th>
+              <th>Institución</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {proyectos.map((p) => (
+              <tr key={p.id}>
+                <td>{p.nombre_proyecto}</td>
+                <td>{p.categoria}</td>
+                <td>{p.institucion || ''}</td>
+                <td>
+                  <Badge estado={p.estado} />
+                </td>
+                <td>
+                  {p.estado !== 'aprobado' && (
+                    <button
+                      className="btn"
+                      style={{ marginTop: 0, padding: '5px 10px', fontSize: '.75rem' }}
+                      onClick={() => aprobar(p.id)}
+                    >
+                      Aprobar
+                    </button>
+                  )}
+                  {p.estado !== 'rechazado' && (
+                    <button
+                      className="btn secondary"
+                      style={{ marginTop: 0, padding: '5px 10px', fontSize: '.75rem', marginLeft: 6 }}
+                      onClick={() => rechazar(p.id)}
+                    >
+                      Rechazar
+                    </button>
+                  )}
+                  <button
+                    className="btn danger"
+                    style={{ marginTop: 0, padding: '5px 10px', fontSize: '.75rem', marginLeft: 6 }}
+                    onClick={() => eliminar(p.id)}
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function TabJueces({ jueces, onChange }) {
+  const [nombre, setNombre] = useState('')
+  const [codigo, setCodigo] = useState('')
+  const [email, setEmail] = useState('')
+  const [msg, setMsg] = useState({ text: '', type: '' })
+
+  function generarCodigo() {
+    const c = Array.from(
+      { length: 6 },
+      () => ALFABETO[Math.floor(Math.random() * ALFABETO.length)]
+    ).join('')
+    setCodigo(c)
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setMsg({ text: '', type: '' })
+    const { error } = await supabase.from('jueces').insert({
+      nombre: nombre.trim(),
+      codigo: codigo.trim().toUpperCase(),
+      email: email.trim() || null,
+    })
+    if (error) {
+      setMsg({ text: 'Error al registrar el juez: ' + error.message, type: 'err' })
+    } else {
+      setMsg({ text: `Juez registrado. Código: ${codigo} — compártelo con ${nombre}.`, type: 'ok' })
+      setNombre('')
+      setCodigo('')
+      setEmail('')
+      onChange()
+    }
+  }
+
+  async function eliminarJuez(id) {
+    if (!confirm('¿Eliminar este juez? Perderá acceso de inmediato.')) return
+    await supabase.from('jueces').delete().eq('id', id)
+    onChange()
+  }
+
+  return (
+    <>
+      <div className="card">
+        <h2>Registrar juez</h2>
+        <p style={{ color: 'var(--text-dim)', fontSize: '.85rem' }}>
+          No necesita correo ni contraseña. Solo genera un código único y compártelo con el juez —
+          lo ingresará en <b>juez.html</b> para entrar.
+        </p>
+        <form onSubmit={handleSubmit}>
+          <label>Nombre del juez</label>
+          <input type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          <label>Código de acceso</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="text"
+              required
+              style={{ flex: 1, textTransform: 'uppercase', letterSpacing: 2 }}
+              placeholder="Ej: ROBOT01"
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value)}
+            />
+            <button
+              type="button"
+              className="btn secondary"
+              style={{ marginTop: 0, whiteSpace: 'nowrap' }}
+              onClick={generarCodigo}
+            >
+              Generar
+            </button>
+          </div>
+          <label>Correo (opcional)</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <button className="btn" type="submit">
+            Registrar juez
+          </button>
+          <MsgBox text={msg.text} type={msg.type} />
+        </form>
+      </div>
+      <div className="card">
+        <h2>Jueces registrados</h2>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Código</th>
+                <th>Correo</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {jueces.map((j) => (
+                <tr key={j.id}>
+                  <td>{j.nombre}</td>
+                  <td>
+                    <b style={{ letterSpacing: 2, color: 'var(--gold)' }}>{j.codigo}</b>
+                  </td>
+                  <td>{j.email || ''}</td>
+                  <td>
+                    <Badge estado={j.auth_id ? 'aprobado' : 'pendiente'}>
+                      {j.auth_id ? 'Ya ingresó' : 'Sin usar'}
+                    </Badge>
+                  </td>
+                  <td>
+                    <button
+                      className="btn danger"
+                      style={{ marginTop: 0, padding: '5px 10px', fontSize: '.75rem' }}
+                      onClick={() => eliminarJuez(j.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function calcularFilasResultados(proyectos, calificaciones) {
+  return proyectos
+    .filter((p) => p.estado === 'aprobado')
+    .map((p) => {
+      const califs = calificaciones.filter((c) => c.proyecto_id === p.id)
+      const notas = califs.map((c) => calcularNotaFinal(c))
+      const promedio = notas.length ? notas.reduce((a, b) => a + b, 0) / notas.length : null
+      return { nombre: p.nombre_proyecto, categoria: p.categoria, numJueces: califs.length, promedio }
+    })
+    .sort((a, b) => (b.promedio ?? -1) - (a.promedio ?? -1))
+}
+
+function TabResultados({ proyectos, calificaciones }) {
+  const filas = calcularFilasResultados(proyectos, calificaciones)
+
+  function exportarCSV() {
+    let csv = 'Posición,Proyecto,Categoría,# Jueces,Nota final\n'
+    filas.forEach((f, i) => {
+      csv += `${i + 1},"${f.nombre}","${f.categoria}",${f.numJueces},${
+        f.promedio !== null ? f.promedio.toFixed(2) : ''
+      }\n`
+    })
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'resultados_feria_informatica.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className="card">
+      <h2>Resultados</h2>
+      <button className="btn gold" onClick={exportarCSV}>
+        Exportar CSV
+      </button>
+      <div className="table-scroll">
+        <table style={{ marginTop: 16 }}>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Proyecto</th>
+              <th>Categoría</th>
+              <th># Jueces</th>
+              <th>Nota final</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((f, i) => (
+              <tr key={f.nombre + i}>
+                <td>{i + 1}</td>
+                <td>{f.nombre}</td>
+                <td>{f.categoria}</td>
+                <td>{f.numJueces}</td>
+                <td>{f.promedio !== null ? f.promedio.toFixed(2) : '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function TabVisitantes({ visitantes }) {
+  function exportarCSV() {
+    let csv = 'Nombre,Correo,Colegio,Fecha de registro\n'
+    visitantes.forEach((v) => {
+      const fecha = new Date(v.created_at).toLocaleString('es-HN')
+      csv += `"${v.nombre}","${v.correo}","${v.colegio}","${fecha}"\n`
+    })
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'visitantes_feria_informatica.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className="card">
+      <h2>Visitantes registrados ({visitantes.length})</h2>
+      <p style={{ color: 'var(--text-dim)', fontSize: '.85rem' }}>
+        Estudiantes que se registraron en <code>/registro-visitantes</code>. Úsalo para enviar
+        promociones o como base para la ruleta de premios.
+      </p>
+      <button className="btn gold" onClick={exportarCSV}>
+        Exportar CSV
+      </button>
+      <div className="table-scroll">
+        <table style={{ marginTop: 16 }}>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Correo</th>
+              <th>Colegio</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visitantes.map((v) => (
+              <tr key={v.id}>
+                <td>{v.nombre}</td>
+                <td>{v.correo}</td>
+                <td>{v.colegio}</td>
+                <td>{new Date(v.created_at).toLocaleString('es-HN')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
