@@ -5,7 +5,7 @@ import MsgBox from '../components/MsgBox'
 import Badge from '../components/Badge'
 import CriterioSlider from '../components/CriterioSlider'
 import { supabase } from '../lib/supabaseClient'
-import { CATEGORIAS, CRITERIOS, ESCALA_MIN, ESCALA_MAX, calcularNotaFinal } from '../lib/criterios'
+import { CATEGORIAS, CRITERIOS, calcularNotaFinal, puntosMaxCriterio } from '../lib/criterios'
 import { useJuezAuth } from '../hooks/useJuezAuth'
 
 export default function Juez() {
@@ -158,7 +158,8 @@ function ProyectoCalificable({ proyecto, existente, calificacionAbierta, onGuard
   const valorInicial = () => {
     const v = {}
     CRITERIOS.forEach((c) => {
-      v[c.key] = existente ? existente[c.key] : Math.round((ESCALA_MIN + ESCALA_MAX) / 2)
+      const max = puntosMaxCriterio(c)
+      v[c.key] = existente ? Number(existente[c.key]) || 0 : Math.round((max / 2) * 2) / 2
     })
     return v
   }
@@ -187,7 +188,7 @@ function ProyectoCalificable({ proyecto, existente, calificacionAbierta, onGuard
         {proyecto.nombre_proyecto}{' '}
         {existente && <Badge estado="aprobado">Calificado</Badge>}
       </h2>
-        <p style={{ color: 'var(--text-dim)', fontSize: '.85rem' }}>
+      <p style={{ color: 'var(--text-dim)', fontSize: '.85rem' }}>
         {proyecto.institucion || ''} — {proyecto.integrantes || ''}
       </p>
       <p
@@ -216,7 +217,7 @@ function ProyectoCalificable({ proyecto, existente, calificacionAbierta, onGuard
 
       <p style={{ marginTop: 10 }}>
         Nota final: <b style={{ color: 'var(--gold)', fontSize: '1.1rem' }}>{total.toFixed(2)}</b>{' '}
-        / 10
+        / 100
       </p>
       <button className="btn" disabled={!calificacionAbierta || guardando} onClick={handleGuardar}>
         {existente ? 'Actualizar calificación' : 'Guardar calificación'}
