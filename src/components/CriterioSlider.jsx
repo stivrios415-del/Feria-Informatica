@@ -1,21 +1,22 @@
-import { ESCALA_MIN, ESCALA_MAX } from '../lib/criterios'
+import { puntosMaxCriterio } from '../lib/criterios'
 
 export default function CriterioSlider({ criterio, value, onChange, disabled }) {
-  const pct = ((value - ESCALA_MIN) / (ESCALA_MAX - ESCALA_MIN)) * 100
+  const max = puntosMaxCriterio(criterio)
+  const pct = (value / max) * 100
 
   return (
     <div className="criterio-row">
       <label>
         {criterio.label}{' '}
         <small style={{ color: 'var(--text-dim)' }}>
-          ({Math.round(criterio.peso * 100)}%)
+          ({Math.round(criterio.peso * 100)}% · hasta {max} pts)
         </small>
       </label>
       <input
         type="range"
-        min={ESCALA_MIN}
-        max={ESCALA_MAX}
-        step={1}
+        min={0}
+        max={max}
+        step={0.5}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
