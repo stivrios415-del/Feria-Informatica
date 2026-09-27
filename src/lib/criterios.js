@@ -3,7 +3,6 @@ export const CATEGORIAS = ['Desarrollo de Software', 'Robótica']
 
 // Criterios de evaluación y sus pesos (deben sumar 1.0).
 // Los "key" coinciden con las columnas de la tabla "calificaciones".
-// Escala de calificación por criterio: 1 a 10
 export const CRITERIOS = [
   { key: 'innovacion', label: 'Innovación', peso: 0.25 },
   { key: 'funcionalidad', label: 'Funcionalidad', peso: 0.25 },
@@ -12,14 +11,21 @@ export const CRITERIOS = [
   { key: 'presentacion', label: 'Presentación', peso: 0.15 },
 ]
 
-export const ESCALA_MIN = 1
-export const ESCALA_MAX = 10
+export const NOTA_MAX = 100
 
-// Calcula la nota final ponderada (sobre 10) a partir de una fila de calificación
+// Puntos máximos que puede otorgar el juez en este criterio (ya reparte el peso).
+// Ej: Innovación (25%) → hasta 25 puntos. Presentación (15%) → hasta 15 puntos.
+export function puntosMaxCriterio(criterio) {
+  return Math.round(criterio.peso * NOTA_MAX * 10) / 10
+}
+
+// La nota final es la suma directa de los puntos otorgados en cada criterio
+// (cada uno ya tiene su propio tope según su peso, así que no hay que
+// multiplicar de nuevo).
 export function calcularNotaFinal(calif) {
   let total = 0
   CRITERIOS.forEach((c) => {
-    total += (Number(calif[c.key]) || 0) * c.peso
+    total += Number(calif[c.key]) || 0
   })
   return Math.round(total * 100) / 100
 }
