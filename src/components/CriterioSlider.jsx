@@ -1,6 +1,8 @@
 import { ESCALA_MIN, ESCALA_MAX } from '../lib/criterios'
 
 export default function CriterioSlider({ criterio, value, onChange, disabled }) {
+  const pct = ((value - ESCALA_MIN) / (ESCALA_MAX - ESCALA_MIN)) * 100
+
   return (
     <div className="criterio-row">
       <label>
@@ -17,6 +19,7 @@ export default function CriterioSlider({ criterio, value, onChange, disabled }) 
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
+        style={{ '--pct': `${pct}%` }}
       />
       <div className="val">{value}</div>
     </div>
